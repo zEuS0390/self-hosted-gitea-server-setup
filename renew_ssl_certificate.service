@@ -1,0 +1,7 @@
+[Unit]
+Description=Renew SSL Certificate of the Self-hosted Gitea Web Application
+
+[Service]
+Type=simple
+WorkingDirectory=/home/git/gitea
+ExecStart=/bin/bash -c 'docker compose run --rm certbot renew && docker compose restart nginx server'

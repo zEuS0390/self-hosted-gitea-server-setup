@@ -1,0 +1,10 @@
+[Unit]
+Description=Run renew_ssl_certificate_job.service after boot and every first day of the month
+
+[Timer]
+Persistent=true
+OnCalendar=*-*-01 00:00:00
+Unit=renew_ssl_certificate.service
+
+[Install]
+WantedBy=multi-user.target
