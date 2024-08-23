@@ -1,46 +1,50 @@
+# Define the networks used by the services in this Docker Compose configuration
 networks:
   gitea:
-    external: false
+    external: false                             # This indicates that the 'gitea' network will be created internally, not using an existing external network
 
 services:
 
+  # Define the Gitea service
   server:
-    image: gitea/gitea:latest
-    container_name: gitea
+    image: gitea/gitea:latest                   # The latest Gitea image will be used for this service
+    container_name: gitea                       # The container will be named 'gitea'
     environment:
-      - USER_UID=1001
-      - USER_GID=1001
-    restart: always
+      - USER_UID=1001                           # Set the user UID inside the container to 1001
+      - USER_GID=1001                           # Set the user GID inside the container to 1001
+    restart: always                             # Always restart the container if it stops
     networks:
-      - gitea
+      - gitea                                   # Connect this service to the 'gitea' network
     volumes:
-      - gitea_data:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - gitea_data:/data                        # Use the 'gitea_data' volume to persist data
+      - /etc/timezone:/etc/timezone:ro          # Mount the host's timezone file into the container as read-only
+      - /etc/localtime:/etc/localtime:ro        # Mount the host's localtime file into the container as read-only
     ports:
-      - "2222:22"
+      - "2222:22"                               # Map port 2222 on the host to port 22 in the container (SSH)
 
+  # Define the Nginx service to act as a reverse proxy
   nginx:
-    image: nginx:latest
-    container_name: nginx
+    image: nginx:latest                         # Use the latest Nginx image
+    container_name: nginx                       # The container will be named 'nginx'
     networks:
-      - gitea
+      - gitea                                   # Connect this service to the 'gitea' network
     volumes:
-      - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
-      - ./certbot/conf/:/etc/letsencrypt/
-      - ./certbot/www/:/var/www/certbot/:ro
+      - ./nginx/conf.d/:/etc/nginx/conf.d/:ro   # Mount custom Nginx configuration files as read-only
+      - ./certbot/conf/:/etc/letsencrypt/       # Mount the directory for SSL certificates
+      - ./certbot/www/:/var/www/certbot/:ro     # Mount the directory for Certbot's webroot challenge files as read-only
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"                                 # Map port 80 on the host to port 80 in the container (HTTP)
+      - "443:443"                               # Map port 443 on the host to port 443 in the container (HTTPS)
     depends_on:
-      - server
+      - server                                  # Ensure the 'server' service (Gitea) is started before Nginx
 
+  # Define the Certbot service to obtain and renew SSL certificates
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:latest               # Use the latest Certbot image
     volumes:
-      - ./certbot/www/:/var/www/certbot/:rw
-      - ./certbot/conf/:/etc/letsencrypt/:rw
+      - ./certbot/www/:/var/www/certbot/:rw     # Mount the directory for Certbot's webroot challenge files
+      - ./certbot/conf/:/etc/letsencrypt/:rw    # Mount the directory for storing SSL certificates and configuration
 
+# Define persistent storage volumes
 volumes:
-  gitea_data:
-
+  gitea_data:                                   # Named volume for storing Gitea's data
